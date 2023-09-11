@@ -1,0 +1,9 @@
+.movie-list{
+    list-style-type: none;
+   
+}
+.list{
+    margin: 0;
+    padding: 0;
+    border: 5px solid black;
+}
