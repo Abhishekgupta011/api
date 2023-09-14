@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import MovieList from './Components/MovieList';
 import Button from './Components/Button';
@@ -6,11 +6,21 @@ import Button from './Components/Button';
 function App() {
   const [moviesList, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [retrying, setRetrying] = useState(true);
+
+  // Define retryingRef outside of the component
+  const retryingRef = useRef(retrying);
+
+  // Create a retry timer ref
+  const retryTimerRef = useRef(null);
 
   const fetchMovieHandler = async () => {
+    setIsLoading(true);
+    setError(null);
+
     try {
-      setIsLoading(true); // Set isLoading to true when fetching data
-      const response = await fetch('https://swapi.dev/api/films');
+      const response = await fetch('https://swapi.dev/api/film');
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -25,23 +35,45 @@ function App() {
       }));
 
       setMovies(transformedMovies);
-      setIsLoading(false); // Set isLoading to false when data is fetched
+      setIsLoading(false);
     } catch (error) {
       console.error('Error:', error);
-      setIsLoading(false); // Set isLoading to false in case of an error
+      setIsLoading(false);
+      const retryMessage = `Something went wrong... Retrying`;
+      setError(retryMessage);
+      if (retryingRef.current) {
+        // Clear the previous retry timer
+        if (retryTimerRef.current) {
+          clearTimeout(retryTimerRef.current);
+        }
+        // Schedule a new retry timer
+        retryTimerRef.current = setTimeout(() => {
+          fetchMovieHandler();
+        }, 5000);
+      }
+    }
+  };
+
+  const cancelRetry = () => {
+    setRetrying(false);
+    setError(null);
+    // Clear the retry timer when canceling retry
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
     }
   };
 
   useEffect(() => {
-    // Fetch movies when the component mounts
     fetchMovieHandler();
-  }, []); // Empty dependency array to ensure it runs once
+  }, []);
 
   return (
     <div className="App">
       <Button onClick={fetchMovieHandler}>Fetch movies</Button>
-      {isLoading && <h3 className='loader'>Loading...</h3>} {/* Display loading message while isLoading is true */}
-      {!isLoading && <MovieList movies={moviesList} />}
+      {isLoading && <p>Loading...</p>}
+      {error && <p>{error}</p>}
+      {!isLoading && !error && <MovieList movies={moviesList} />}
+      {retrying && <Button onClick={cancelRetry}>Cancel</Button>}
     </div>
   );
 }
