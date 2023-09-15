@@ -61,14 +61,14 @@ function App() {
       clearTimeout(retryTimerRef.current);
     }
   }, []);
-
+  const addMovieHandler= (newMovieObj)=>{
+    console.log(newMovieObj)
+  }
+  
   useEffect(() => {
     fetchMovies();
   }, [fetchMovies]);
 
-  const addMovieHandler= (newMovieObj)=>{
-    console.log(newMovieObj)
-  }
   return (
     <div className="App">
       <Form onAddMovie={addMovieHandler}/>
