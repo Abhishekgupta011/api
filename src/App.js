@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import MovieList from './Components/MovieList';
 import Button from './Components/Button';
+import Form from './Components/Form';
 
 function App() {
   const [moviesList, setMovies] = useState([]);
@@ -65,9 +66,13 @@ function App() {
     fetchMovies();
   }, [fetchMovies]);
 
+  const addMovieHandler= (newMovieObj)=>{
+    console.log(newMovieObj)
+  }
   return (
     <div className="App">
-      <Button onClick={fetchMovies}>Fetch movies</Button>
+      <Form onAddMovie={addMovieHandler}/>
+      <Button onClick={fetchMovies} className="fetch">Fetch movies</Button>
       {isLoading && <p>Loading...</p>}
       {error && <p>{error}</p>}
       {!isLoading && !error && <MovieList movies={moviesList} />}

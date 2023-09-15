@@ -1,8 +1,12 @@
-.fetch-movie {
+input{
+    width: 95%;
+    height: 50px;
+}
+.add-movie {
     background-color: rgb(105, 27, 179);
     color: white;
     border: none;
     padding: 3%;
-    margin-top: 20%;
+    margin-top: 5%;
     align-items: center;
 }

@@ -4,7 +4,7 @@ import "./Button.css";
 const Button = (props) =>{
     return(
         <Card>
-            <button onClick={props.onClick}>{props.children}</button>
+            <button onClick={props.onClick} className="fetch-movie">{props.children}</button>
         </Card>
     )
 }
