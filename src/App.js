@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './App.css';
 import MovieList from './Components/MovieList';
 import Button from './Components/Button';
@@ -15,12 +15,12 @@ function App() {
   // Create a retry timer ref
   const retryTimerRef = useRef(null);
 
-  const fetchMovieHandler = async () => {
+  const fetchMovies = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('https://swapi.dev/api/film');
+      const response = await fetch('https://swapi.dev/api/films');
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -47,29 +47,27 @@ function App() {
           clearTimeout(retryTimerRef.current);
         }
         // Schedule a new retry timer
-        retryTimerRef.current = setTimeout(() => {
-          fetchMovieHandler();
-        }, 5000);
+        retryTimerRef.current = setTimeout(fetchMovies, 5000);
       }
     }
-  };
+  }, []);
 
-  const cancelRetry = () => {
+  const cancelRetry = useCallback(() => {
     setRetrying(false);
     setError(null);
     // Clear the retry timer when canceling retry
     if (retryTimerRef.current) {
       clearTimeout(retryTimerRef.current);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchMovieHandler();
-  }, []);
+    fetchMovies();
+  }, [fetchMovies]);
 
   return (
     <div className="App">
-      <Button onClick={fetchMovieHandler}>Fetch movies</Button>
+      <Button onClick={fetchMovies}>Fetch movies</Button>
       {isLoading && <p>Loading...</p>}
       {error && <p>{error}</p>}
       {!isLoading && !error && <MovieList movies={moviesList} />}
