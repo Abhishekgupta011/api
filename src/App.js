@@ -105,6 +105,23 @@ function App() {
       handleError(error);
     }
   };
+  const deleteMovieHandler = async (id) => {
+    console.log("hbbj")
+    try {
+      const response = await fetch(`https://react-api12-default-rtdb.firebaseio.com/movies/${id}.json`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete the movie.');
+      }
+
+      // Update the UI by removing the deleted movie from the moviesList state
+      setMovies((prevMovies) => prevMovies.filter((movie) => movie.id !== id));
+    } catch (error) {
+      console.error('Error deleting movie:', error);
+    }
+  };
 
   return (
     <div className="App">
@@ -114,7 +131,8 @@ function App() {
       </Button>
       {isLoading && <p>Loading...</p>}
       {error && <p>{error}</p>}
-      {!isLoading && !error && <MovieList movies={moviesList} />}
+      {!isLoading && !error && <MovieList movies={moviesList}
+      onDeleteMovie={deleteMovieHandler} />}
       {retrying && <Button onClick={handleCancelRetry}>Cancel</Button>}
     </div>
   );
