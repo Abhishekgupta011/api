@@ -10,73 +10,112 @@ function App() {
   const [error, setError] = useState(null);
   const [retrying, setRetrying] = useState(true);
 
-  // Define retryingRef outside of the component
   const retryingRef = useRef(retrying);
-
-  // Create a retry timer ref
   const retryTimerRef = useRef(null);
 
-  const fetchMovies = useCallback(async () => {
+  const handleFetchMovies = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await fetch('https://swapi.dev/api/films');
+      const response = await fetch('https://react-api12-default-rtdb.firebaseio.com/movies.json');
+
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
 
       const data = await response.json();
 
-      const transformedMovies = data.results.map((movieData) => ({
-        id: movieData.episode_id,
-        title: movieData.title,
-        release: movieData.release_date,
-        openingText: movieData.opening_crawl,
-      }));
+      const loadedMovies = [];
+      for (const key in data) {
+        loadedMovies.push({
+          id: key,
+          title: data[key].title,
+          openingtext: data[key].openingtext,
+          date: data[key].date,
+        });
+      }
 
-      setMovies(transformedMovies);
+      setMovies(loadedMovies);
       setIsLoading(false);
     } catch (error) {
-      console.error('Error:', error);
-      setIsLoading(false);
-      const retryMessage = `Something went wrong... Retrying`;
-      setError(retryMessage);
-      if (retryingRef.current) {
-        // Clear the previous retry timer
-        if (retryTimerRef.current) {
-          clearTimeout(retryTimerRef.current);
-        }
-        // Schedule a new retry timer
-        retryTimerRef.current = setTimeout(fetchMovies, 5000);
-      }
+      handleError(error);
     }
   }, []);
 
-  const cancelRetry = useCallback(() => {
+  const handleCancelRetry = useCallback(() => {
     setRetrying(false);
     setError(null);
-    // Clear the retry timer when canceling retry
+
     if (retryTimerRef.current) {
       clearTimeout(retryTimerRef.current);
     }
   }, []);
-  const addMovieHandler= (newMovieObj)=>{
-    console.log(newMovieObj)
-  }
-  
+
+  const handleError = (error) => {
+    console.error('Error:', error);
+    setIsLoading(false);
+
+    if (retryingRef.current) {
+      setError('Something went wrong... Retrying');
+
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+      }
+
+      retryTimerRef.current = setTimeout(() => {
+        handleFetchMovies();
+      }, 5000);
+    } else {
+      setError('Failed to fetch movies. Please try again later.');
+    }
+  };
+
   useEffect(() => {
-    fetchMovies();
-  }, [fetchMovies]);
+    handleFetchMovies();
+  }, [handleFetchMovies]);
+
+  const handleAddMovie = async (newMovieObj) => {
+    console.log('Adding movie:', newMovieObj);
+    try {
+      const response = await fetch('https://react-api12-default-rtdb.firebaseio.com/movies.json', {
+        method: 'POST',
+        body: JSON.stringify(newMovieObj),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add the movie.');
+      }
+
+      const data = await response.json();
+
+      setMovies((prevMovies) => [
+        ...prevMovies,
+        {
+          id: data.name,
+          ...newMovieObj,
+        },
+      ]);
+
+      console.log('New movie added:', data);
+    } catch (error) {
+      handleError(error);
+    }
+  };
 
   return (
     <div className="App">
-      <Form onAddMovie={addMovieHandler}/>
-      <Button onClick={fetchMovies} className="fetch">Fetch movies</Button>
+      <Form onAddMovie={handleAddMovie} />
+      <Button onClick={handleFetchMovies} className="fetch">
+        Fetch movies
+      </Button>
       {isLoading && <p>Loading...</p>}
       {error && <p>{error}</p>}
       {!isLoading && !error && <MovieList movies={moviesList} />}
-      {retrying && <Button onClick={cancelRetry}>Cancel</Button>}
+      {retrying && <Button onClick={handleCancelRetry}>Cancel</Button>}
     </div>
   );
 }
